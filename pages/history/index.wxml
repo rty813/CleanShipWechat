@@ -2,6 +2,7 @@
 <view 
   wx:for="{{history}}" 
   bindtap='btnClick' 
+  bindlongtap='btnDelete'
   data-index = "{{index}}"
   class="history-view">
     {{index}}: {{item.name}}

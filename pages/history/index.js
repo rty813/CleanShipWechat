@@ -17,7 +17,11 @@ Page({
       if (history) {
         let historyList = history.split("#");
         historyList.forEach(item => {
-          let data = item.replace(/;/g, "\r\n");
+          console.log(item);
+          if (item == "") {
+            return;
+          }
+          let data = item.replace(/;/g, " -> ");
           // console.log(data);
           datas.push({name: data});
         })
@@ -35,8 +39,14 @@ Page({
 
   btnClick: function(e) {
     let index = e.currentTarget.dataset.index;
-    app.globalData.history = this.data.history[index].name;
+    let history = this.data.history[index].name.replace(/ -> /g, ";");
+    app.globalData.history = history;
     app.globalData.isSetHistory = true;
     wx.navigateBack();
+  },
+
+  btnDelete: function(e) {
+    let index = e.currentTarget.dataset.index;
+    console.log(this.data.history[index].name);
   }
 })

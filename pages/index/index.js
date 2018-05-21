@@ -130,6 +130,38 @@ Page({
   onShow: function() {
     if (app.globalData.isSetHistory) {
       console.log(app.globalData.history);
+      let markers = this.data.markers;
+      while (markers.length > 1) {
+        markers.pop();
+      }
+      let polylinePoints = [];
+      let historyList = app.globalData.history.split(";");
+      historyList.forEach(item => {
+        if (item == "") {
+          return
+        }
+        let lat = item.split(",")[0];
+        let lng = item.split(",")[1];
+        console.log(lat + ';' + lng + "#");
+        markers.push({
+          id: markers.length,
+          latitude: lat,
+          longitude: lng,
+          iconPath: '/resources/mao.png',
+          anchor: { x: .5, y: .5 },
+          width: 20,
+          height: 20
+        });
+        polylinePoints.push({
+          latitude: lat,
+          longitude: lng,
+        });
+      });
+      this.setData({'markers': markers});
+      this.setData({ 'polyline[0].points': polylinePoints });
+      // 添加连线
+
+
     }
   },
 
@@ -461,7 +493,9 @@ Page({
     
     let aHistory = '';
     markers.forEach(marker => {
-      aHistory += marker.latitude.toString() + "," + marker.longitude.toString() + ";";
+      if (marker.id != 0) {
+        aHistory += marker.latitude.toString() + "," + marker.longitude.toString() + ";";
+      }
     });
     console.log(aHistory);
     aHistory += "#";
