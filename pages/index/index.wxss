@@ -1,0 +1,49 @@
+/**index.wxss**/
+.cover-text {
+  margin-top: 10px;
+  margin-right: 10px;
+  margin-left: auto;
+  width : auto;
+  text-align: right;
+}
+
+.cover-view {
+  margin-left: 20%;
+  margin-top: 85vh;
+  width: 60%;
+  height: 50px;
+  text-align: center;
+  line-height: 50px;
+  background-color: #1AAD19;
+  color: #fff;
+}
+
+.cover-ready {
+  margin-left: 5%;
+  margin-top: 62vh;
+  width: 90%;
+  height: 32vh;
+  background-color: #fefefe;
+  color: #fff;
+}
+
+.coverReady {
+  margin-left: auto; 
+  margin-right: auto;
+  margin-top: 1vh;
+  width: 80%;
+  height: 5vh;
+  text-align: center;
+  line-height: 5vh;
+  background-color: #1AAD19;
+  color: #fff;
+}
+
+.cover-nav {
+  margin-left: 5%;
+  margin-top: 75vh;
+  width: 90%;
+  height: 19vh;
+  background-color: #fefefe;
+  color: #fff;
+}

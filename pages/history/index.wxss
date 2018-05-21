@@ -1,0 +1,6 @@
+/* pages/history/index.wxss */
+.history-view{
+  margin: 10px;
+  padding: 10px;
+  background-color: #f5f5f5;
+}

@@ -1,0 +1,9 @@
+<!--pages/history/index.wxml-->
+<view 
+  wx:for="{{history}}" 
+  bindtap='btnClick' 
+  data-index = "{{index}}"
+  class="history-view">
+    {{index}}: {{item.name}}
+</view>  
+<button bindtap='btnReturn'>返回</button>

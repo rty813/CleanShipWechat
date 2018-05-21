@@ -1,0 +1,63 @@
+<!--index.wxml-->
+<view class="container">
+  
+  <map 
+    show-location 
+    id="myMap"
+    style="width: 100%; height: 100vh;"
+    controls="{{controls}}" 
+    bindcontroltap="controltap"
+    bindregionchange="regionchange"
+    markers='{{markers}}'
+    polyline='{{polyline}}'>
+      <cover-view class = 'cover-text'>{{charge}}</cover-view> 
+      <cover-view hidden='{{state != UNBIND}}'
+        class = 'cover-view'
+        bindtap='btnBind'>绑定</cover-view>
+      <cover-view hidden='{{state != UNREADY}}'
+        class = 'cover-view'
+        bindtap='btnConnect'>连接小蓝船</cover-view>
+      <cover-view 
+        hidden="{{state != READY}}"
+        class='cover-ready' 
+        >
+        <cover-view 
+          class='coverReady'
+          bindtap="btnMarkEnable">标点开关
+        </cover-view>
+        <cover-view 
+          class='coverReady'
+          bindtap="btnMark">标点
+        </cover-view>
+        <cover-view 
+          class='coverReady'
+          bindtap="btnCancel">撤销
+        </cover-view>
+        <cover-view 
+          class='coverReady'
+          bindtap="btnDelete">删除
+        </cover-view>
+        <cover-view 
+          class='coverReady'
+          bindtap="btnNav">开始导航
+        </cover-view>
+      </cover-view>
+
+      <cover-view
+        hidden='{{state != NAV}}'
+        class='cover-nav'>
+        <cover-view 
+          class='coverReady'
+          bindtap="btnPause">{{text_pause}}
+        </cover-view>
+        <cover-view 
+          class='coverReady'
+          bindtap="btnStop">终止
+        </cover-view>
+        <cover-view 
+          class='coverReady'
+          bindtap="btnHome">返航
+        </cover-view>
+      </cover-view>
+  </map>
+</view>
