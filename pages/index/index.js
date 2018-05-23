@@ -80,7 +80,30 @@ Page({
   onReady: function (e) {
     this.mapCtx = wx.createMapContext('myMap')
     this.mapCtx.moveToLocation()
-    var that = this;
+    var that = this; 
+    wx.closeBluetoothAdapter({
+      success: function (res) {
+        if (wx.openBluetoothAdapter) {
+          wx.openBluetoothAdapter({
+            success: function (res) {
+              console.log("蓝牙启动成功");
+            },
+            fail: function (res) {
+              wx.showToast({
+                title: '蓝牙未打开！',
+                icon: 'none'
+              })
+            }
+          })
+        } else {
+          // 如果希望用户在最新版本的客户端上体验您的小程序，可以这样子提示
+          wx.showModal({
+            title: '提示',
+            content: '当前微信版本过低，无法使用该功能，请升级到最新微信版本后重试。'
+          })
+        };
+      },
+    })
     wx.getSystemInfo({
       success: function (res) {
         windowHeight = res.windowHeight
@@ -209,25 +232,6 @@ Page({
 
   btnConnect: function (e) {
     var that = this;
-    if (wx.openBluetoothAdapter) {
-      wx.openBluetoothAdapter({
-        success: function (res) {
-          console.log("蓝牙启动成功");
-        },
-        fail: function (res) {
-          wx.showToast({
-            title: '蓝牙未打开！',
-            icon: 'none'
-          })
-        }
-      })
-    } else {
-      // 如果希望用户在最新版本的客户端上体验您的小程序，可以这样子提示
-      wx.showModal({
-        title: '提示',
-        content: '当前微信版本过低，无法使用该功能，请升级到最新微信版本后重试。'
-      })
-    };
     wx.showLoading({
       title: '连接中',
       mask: true,
