@@ -11,19 +11,18 @@ Page({
   },
 
   onReady: function () {
-    let datas = this.data.history;
+    let datas = [];
     try {
       let history = wx.getStorageSync('history');
       if (history) {
+        console.log(history);
         let historyList = history.split("#");
         historyList.forEach(item => {
-          console.log(item);
           if (item == "") {
             return;
           }
           let data = item.replace(/;/g, " -> ");
-          // console.log(data);
-          datas.push({name: data});
+          datas.push(data);
         })
         this.setData({history: datas});
       }
@@ -39,7 +38,7 @@ Page({
 
   btnClick: function(e) {
     let index = e.currentTarget.dataset.index;
-    let history = this.data.history[index].name.replace(/ -> /g, ";");
+    let history = this.data.history[index].replace(/ -> /g, ";");
     app.globalData.history = history;
     app.globalData.isSetHistory = true;
     wx.navigateBack();
@@ -47,6 +46,15 @@ Page({
 
   btnDelete: function(e) {
     let index = e.currentTarget.dataset.index;
-    console.log(this.data.history[index].name);
+    let datas = this.data.history.join('#');
+    datas = datas.replace(this.data.history[index], "");
+    datas = datas.replace(/ -> /g, ";");
+    datas = datas.replace(/##/g, "#");
+    try{
+      wx.setStorageSync("history", datas);
+      this.onReady();
+    } catch (e) {
+      console.error(e);
+    }
   }
 })

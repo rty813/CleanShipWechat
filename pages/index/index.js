@@ -2,6 +2,7 @@
 //获取应用实例
 const app = getApp()
 const utils = require('./utils')
+const timeUtils = require('../../utils/util.js');
 
 var windowWidth;
 var windowHeight;
@@ -14,6 +15,7 @@ const UUID_SERVICE = "0000FFE0-0000-1000-8000-00805F9B34FB";
 const UUID_NOTIFY  = "0000FFE1-0000-1000-8000-00805F9B34FB";
 var newData = '';
 var queryType = 0;
+var counter = 0;
 
 Page({
   data: {
@@ -159,6 +161,7 @@ Page({
       }
       let polylinePoints = [];
       let historyList = app.globalData.history.split(";");
+      let includePoints = [];
       historyList.forEach(item => {
         if (item == "") {
           return
@@ -166,6 +169,7 @@ Page({
         let lat = item.split(",")[0];
         let lng = item.split(",")[1];
         console.log(lat + ';' + lng + "#");
+        includePoints.push({latitude:lat, longitude:lng});
         markers.push({
           id: markers.length,
           latitude: lat,
@@ -180,11 +184,9 @@ Page({
           longitude: lng,
         });
       });
+      this.mapCtx.includePoints({points: includePoints})
       this.setData({'markers': markers});
       this.setData({ 'polyline[0].points': polylinePoints });
-      // 添加连线
-
-
     }
   },
 
@@ -334,15 +336,40 @@ Page({
                 let lat = parseFloat(datas[0]);
                 let lng = parseFloat(datas[1]);
                 console.log(lat + ";" + lng);
-                let markers = that.data.markers;
-                markers[0].latitude = lat;
-                markers[0].longitude = lng;
-                that.setData({ markers, markers });
+                // 上传数据
+                counter = counter > 5 ? 0 : counter + 1;
+                if (counter == 0) {
+                  wx.request({
+                    url: 'http://orca-tech.cn/app/fengqing/data_collect.php',
+                    data: {
+                      latlng: lat + ',' + lng,
+                      date: timeUtils.formatTime(new Date())
+                    },
+                    header: {
+                      'content-type': 'application/x-www-form-urlencoded' // 默认值
+                    },
+                    method: 'POST',
+                    success: (res) => {
+                      console.log(res.data);
+                    }
+                  })
+                }
+                // 移动船
+                that.mapCtx.translateMarker({
+                  markerId: 0,
+                  destination: {latitude:lat, longitude:lng},
+                  autoRotate: true,
+                  duration: 1500,
+                });
+                // 连线
                 let points = that.data.polyline[1].points;
                 points.push({
                   latitude: lat,
                   longitude: lng
                 });
+                if (points.length == 1) {
+                  that.mapCtx.includePoints({points: points});
+                }
                 console.log(that.data.polyline);
                 that.setData({ 'polyline[1].points': points });
               }
@@ -479,7 +506,8 @@ Page({
             markers.pop();
           }
           that.setData({markers: markers});
-          that.setData({'polyline[0].points': []});
+          that.setData({ 'polyline[0].points': [] });
+          that.setData({ 'polyline[1].points': [] });
         }
       }
     })
