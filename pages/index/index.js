@@ -338,11 +338,12 @@ Page({
                 console.log(lat + ";" + lng);
                 // 上传数据
                 counter = counter > 5 ? 0 : counter + 1;
-                if (counter == 0) {
+                if (counter == 0 || true) {
+                  console.debug('request');
                   wx.request({
                     url: 'http://orca-tech.cn/app/fengqing/data_collect.php',
                     data: {
-                      latlng: lat + ',' + lng,
+                      latlng: lng + ',' + lat,
                       date: timeUtils.formatTime(new Date())
                     },
                     header: {
@@ -351,9 +352,15 @@ Page({
                     method: 'POST',
                     success: (res) => {
                       console.log(res.data);
+                      that.setData({charge: res.data});
+                    },
+                    fail: (res) => {
+                      console.warn(res);
+                      that.setData({ charge: 'fail' });
                     }
                   })
                 }
+                counter = counter > 5 ? 0 : counter + 1;
                 // 移动船
                 that.mapCtx.translateMarker({
                   markerId: 0,
@@ -404,7 +411,6 @@ Page({
       })
       buffer = utils.str2ab(data2);
       setTimeout(() => {
-        console.log(data2);
         wx.writeBLECharacteristicValue({
           deviceId: deviceAddr,
           serviceId: UUID_SERVICE,
@@ -517,6 +523,9 @@ Page({
     let markers = this.data.markers;
     if (markers.length < 2) {
       return;
+    }
+    if (markable) {
+      this.btnMarkEnable();
     }
     wx.showLoading({
       title: '发送中',
