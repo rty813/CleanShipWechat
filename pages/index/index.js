@@ -252,7 +252,7 @@ Page({
           title: "连接失败",
           icon: "none",
           duration: 2000,
-          mask: true,
+          mask: false,
         })
       },
     })
@@ -310,7 +310,7 @@ Page({
           title: "连接成功",
           icon: "success",
           duration: 2000,
-          mask: true,
+          mask: false,
         })
         that.setData({state : that.data.READY});
         queryStateInterval = setInterval(that.queryState, 2000);
@@ -338,10 +338,10 @@ Page({
                 console.log(lat + ";" + lng);
                 // 上传数据
                 counter = counter > 5 ? 0 : counter + 1;
-                if (counter == 0 || true) {
+                if (counter == 0) {
                   console.debug('request');
                   wx.request({
-                    url: 'http://orca-tech.cn/app/fengqing/data_collect.php',
+                    url: 'https://orca-tech.cn/app/fengqing/data-collect.php',
                     data: {
                       latlng: lng + ',' + lat,
                       date: timeUtils.formatTime(new Date())
@@ -356,7 +356,7 @@ Page({
                     },
                     fail: (res) => {
                       console.warn(res);
-                      that.setData({ charge: 'fail' });
+                      that.setData({ charge: 'fail' + res.errMsg });
                     }
                   })
                 }
