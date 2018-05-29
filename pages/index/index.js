@@ -8,11 +8,12 @@ var windowWidth;
 var windowHeight;
 var markable = false;
 var deviceAddr;
+var deviceName;
 var latitude;
 var longitude;
 var queryStateInterval;
 const UUID_SERVICE = "0000FFE0-0000-1000-8000-00805F9B34FB";
-const UUID_NOTIFY  = "0000FFE1-0000-1000-8000-00805F9B34FB";
+const UUID_NOTIFY = "0000FFE1-0000-1000-8000-00805F9B34FB";
 var newData = '';
 var queryType = 0;
 var counter = 0;
@@ -74,6 +75,7 @@ Page({
     UNREADY: 0,
     READY: 1,
     NAV: 2,
+    HOME: 3,
     state: -1,
     platform: '',
     text_pause: "暂停",
@@ -82,7 +84,7 @@ Page({
   onReady: function (e) {
     this.mapCtx = wx.createMapContext('myMap')
     this.mapCtx.moveToLocation()
-    var that = this; 
+    var that = this;
     wx.closeBluetoothAdapter({
       success: function (res) {
         if (wx.openBluetoothAdapter) {
@@ -110,7 +112,7 @@ Page({
       success: function (res) {
         windowHeight = res.windowHeight
         windowWidth = res.windowWidth
-        that.setData({platform: res.platform});
+        that.setData({ platform: res.platform });
         console.log(res.platform);
         wx.getStorage({
           key: 'addr',
@@ -127,32 +129,38 @@ Page({
             that.setData({ state: that.data.UNBIND });
           }
         });
+        try {
+          deviceName = wx.getStorageSync('name');
+        } catch (e) {
+          deviceName = "";
+        }
+        wx.setNavigationBarTitle({ title: deviceName + "欧卡小蓝船" });
       }
     })
 
-    wx.onBLEConnectionStateChange(function(res){
+    wx.onBLEConnectionStateChange(function (res) {
       if (!res.connected) {
         wx.showToast({
           title: '连接中断',
           duration: 2000,
           mask: true,
-        })  
+        })
       }
     })
   },
 
-  onUnload: function() {
+  onUnload: function () {
     clearInterval(queryStateInterval);
     wx.closeBLEConnection({
       deviceId: deviceAddr,
-      success: res => {console.log(res)},
+      success: res => { console.log(res) },
     })
     wx.closeBluetoothAdapter({
-      success: function(res) {},
+      success: function (res) { },
     })
   },
 
-  onShow: function() {
+  onShow: function () {
     if (app.globalData.isSetHistory) {
       console.log(app.globalData.history);
       let markers = this.data.markers;
@@ -169,7 +177,7 @@ Page({
         let lat = item.split(",")[0];
         let lng = item.split(",")[1];
         console.log(lat + ';' + lng + "#");
-        includePoints.push({latitude:lat, longitude:lng});
+        includePoints.push({ latitude: lat, longitude: lng });
         markers.push({
           id: markers.length,
           latitude: lat,
@@ -184,8 +192,8 @@ Page({
           longitude: lng,
         });
       });
-      this.mapCtx.includePoints({points: includePoints})
-      this.setData({'markers': markers});
+      this.mapCtx.includePoints({ points: includePoints })
+      this.setData({ 'markers': markers });
       this.setData({ 'polyline[0].points': polylinePoints });
     }
   },
@@ -207,6 +215,7 @@ Page({
             duration: 2000
           })
           deviceAddr = that.data.platform == "android" ? datas[2] : datas[3];
+          deviceName = datas[1];
           wx.setStorage({
             key: 'id',
             data: datas[0],
@@ -220,6 +229,7 @@ Page({
             data: deviceAddr,
           })
           that.setData({ state: that.data.UNREADY })
+          wx.setNavigationBarTitle({ title: datas[1] + "欧卡小蓝船" });
         }
         else {
           wx.showToast({
@@ -241,11 +251,11 @@ Page({
 
     wx.createBLEConnection({
       deviceId: deviceAddr,
-      success: function(res) {
+      success: function (res) {
         console.log('connect success');
         that.getService();
       },
-      fail: function(errMsg) {
+      fail: function (errMsg) {
         console.log(errMsg);
         wx.hideLoading();
         wx.showToast({
@@ -257,11 +267,11 @@ Page({
       },
     })
   },
-  getService: function() {
+  getService: function () {
     var that = this;
     wx.getBLEDeviceServices({
       deviceId: deviceAddr,
-      success: function(res) {
+      success: function (res) {
         res.services.forEach(service => {
           // console.log("SERVICE UUID: " + service.uuid);
           if (service.uuid == UUID_SERVICE) {
@@ -271,17 +281,17 @@ Page({
           }
         })
       },
-      fail: function(res) {},
-      complete: function(res) {},
+      fail: function (res) { },
+      complete: function (res) { },
     })
   },
 
-  getCharacteristics: function() {
+  getCharacteristics: function () {
     var that = this;
     wx.getBLEDeviceCharacteristics({
       deviceId: deviceAddr,
       serviceId: UUID_SERVICE,
-      success: function(res) {
+      success: function (res) {
         res.characteristics.forEach(characteristic => {
           // console.log("CHARACTERISTIC UUID: " + characteristic.uuid);
           if (characteristic.uuid == UUID_NOTIFY) {
@@ -291,19 +301,19 @@ Page({
           }
         });
       },
-      fail: function(res) {},
-      complete: function(res) {},
+      fail: function (res) { },
+      complete: function (res) { },
     })
   },
 
-  setCharacteristicNotification: function() {
+  setCharacteristicNotification: function () {
     var that = this;
     wx.notifyBLECharacteristicValueChange({
       deviceId: deviceAddr,
       serviceId: UUID_SERVICE,
       characteristicId: UUID_NOTIFY,
       state: true,
-      success: function(res) {
+      success: function (res) {
         that.setBleListener();
         wx.hideLoading();
         wx.showToast({
@@ -312,15 +322,15 @@ Page({
           duration: 2000,
           mask: false,
         })
-        that.setData({state : that.data.READY});
+        that.setData({ state: that.data.READY });
         queryStateInterval = setInterval(that.queryState, 2000);
       },
     })
   },
 
-  setBleListener: function() {
+  setBleListener: function () {
     let that = this;
-    wx.onBLECharacteristicValueChange(function(res){
+    wx.onBLECharacteristicValueChange(function (res) {
       console.log(utils.ab2str(res.value));
       newData += utils.ab2str(res.value);
       if (newData.endsWith("#")) {
@@ -328,7 +338,7 @@ Page({
         newData = newData.replace("#", "");
         newData = newData.replace("$", "");
         let datas = newData.split(";");
-        if (datas.length == 2){
+        if (datas.length == 2) {
           switch (parseInt(datas[0])) {
             case 0:
               datas = datas[1].split(",");
@@ -337,7 +347,6 @@ Page({
                 let lng = parseFloat(datas[1]);
                 console.log(lat + ";" + lng);
                 // 上传数据
-                counter = counter > 5 ? 0 : counter + 1;
                 if (counter == 0) {
                   console.debug('request');
                   wx.request({
@@ -352,7 +361,7 @@ Page({
                     method: 'POST',
                     success: (res) => {
                       console.log(res.data);
-                      that.setData({charge: res.data});
+                      that.setData({ charge: res.data });/////
                     },
                     fail: (res) => {
                       console.warn(res);
@@ -364,9 +373,9 @@ Page({
                 // 移动船
                 that.mapCtx.translateMarker({
                   markerId: 0,
-                  destination: {latitude:lat, longitude:lng},
+                  destination: { latitude: lat, longitude: lng },
                   autoRotate: true,
-                  duration: 1500,
+                  duration: 1000,
                 });
                 // 连线
                 let points = that.data.polyline[1].points;
@@ -375,7 +384,7 @@ Page({
                   longitude: lng
                 });
                 if (points.length == 1) {
-                  that.mapCtx.includePoints({points: points});
+                  that.mapCtx.includePoints({ points: points });
                 }
                 console.log(that.data.polyline);
                 that.setData({ 'polyline[1].points': points });
@@ -385,10 +394,9 @@ Page({
               that.handleState(parseInt(datas[1]));
               break;
             case 9:
-              that.setData({charge : '剩余电量：' + datas[1] + "%"});
+              that.setData({ charge: '剩余电量：' + datas[1] + "%" });
               break;
           };
-          
         }
         newData = '';
       }
@@ -406,7 +414,7 @@ Page({
         serviceId: UUID_SERVICE,
         characteristicId: UUID_NOTIFY,
         value: buffer,
-        success: function (res) {console.log(res) },
+        success: function (res) { console.log(res) },
         fail: (res) => { console.log(res) }
       })
       buffer = utils.str2ab(data2);
@@ -428,14 +436,53 @@ Page({
         serviceId: UUID_SERVICE,
         characteristicId: UUID_NOTIFY,
         value: buffer,
-        success: function (res) { console.log(res)},
-        fail: (res) => {console.log(res)}
+        success: function (res) { console.log(res) },
+        fail: (res) => { console.log(res) }
       })
     }
   },
 
-  handleState: function(state) {
+  handleState: function (state) {
+    //正数=循环模式第几圈且正在运行 
+    //  0=刚上电啥都没干 
+    // -1=连线模式运行中 
+    // -2=循环模式暂停 
+    // -3=连线模式暂停 
+    // -4=连线模式结束 
+    // -5=返航
     console.log(state);
+    var title = "";
+    switch (state) {
+      case 0:
+        this.setData({ state: this.data.READY });
+        title = "欧卡小蓝船";
+        break;
+      case -1:
+        this.setData({ state: this.data.NAV });
+        title = "连线模式运行中";
+        break;
+      case -2:
+        this.setData({ state: this.data.NAV });
+        title = "循环模式暂停";
+        break;
+      case -3:
+        this.setData({ state: this.data.NAV });
+        title = "连线模式暂停";
+        break;
+      case -4:
+        this.setData({ state: this.data.NAV });
+        title = "连线模式已结束";
+        break;
+      case -5:
+        this.setData({ state: this.data.HOME });
+        title = "返航中";
+        break;
+      default:
+        this.setData({ state: this.data.NAV });
+        title = "循环模式运行中";
+        break;
+    }
+    wx.setNavigationBarTitle({ title: deviceName + title });
   },
 
   btnMarkEnable: function () {
@@ -459,10 +506,10 @@ Page({
       return;
     }
     let markers = this.data.markers;
-    if (markers.length > 1 
+    if (markers.length > 1
       && markers[markers.length - 1].latitude == latitude
-      && markers[markers.length - 1].longitude == longitude){
-        return;
+      && markers[markers.length - 1].longitude == longitude) {
+      return;
     }
     markers.push({
       id: markers.length,
@@ -496,7 +543,7 @@ Page({
       polylinePoints.pop();
     }
     this.setData({ 'markers': markers });
-    this.setData({ 'polyline[0].points': polylinePoints});
+    this.setData({ 'polyline[0].points': polylinePoints });
   },
 
   btnDelete: function () {
@@ -511,7 +558,7 @@ Page({
           while (markers.length > 1) {
             markers.pop();
           }
-          that.setData({markers: markers});
+          that.setData({ markers: markers });
           that.setData({ 'polyline[0].points': [] });
           that.setData({ 'polyline[1].points': [] });
         }
@@ -519,7 +566,7 @@ Page({
     })
   },
 
-  btnNav: function() {
+  btnNav: function () {
     let markers = this.data.markers;
     if (markers.length < 2) {
       return;
@@ -531,7 +578,7 @@ Page({
       title: '发送中',
       mask: true,
     })
-    
+
     let aHistory = '';
     markers.forEach(marker => {
       if (marker.id != 0) {
@@ -541,7 +588,7 @@ Page({
     console.log(aHistory);
     aHistory += "#";
 
-    try{
+    try {
       let history = wx.getStorageSync('history');
       if (history) {
         history += aHistory;
@@ -550,7 +597,7 @@ Page({
       else {
         wx.setStorageSync('history', aHistory);
       }
-    } catch(e) {
+    } catch (e) {
       console.error(e);
     }
     let index = 1;
@@ -560,7 +607,7 @@ Page({
     let interval = setInterval(() => {
       if (index >= markers.length) {
         that.writeValue("$NAV,1#");
-        that.setData({state : that.data.NAV});
+        that.setData({ state: that.data.NAV });
         wx.hideLoading();
         clearInterval(interval);
         queryStateInterval = setInterval(that.queryState, 2000);
@@ -582,8 +629,8 @@ Page({
       setTimeout(() => {
         this.writeValue("$PAUSE#");
         queryStateInterval = setInterval(this.queryState, 2000);
-      },1000)
-      this.setData({text_pause: "继续"})
+      }, 1000)
+      this.setData({ text_pause: "继续" })
     } else {
       setTimeout(() => {
         this.writeValue("$GO#");
@@ -598,19 +645,29 @@ Page({
     setTimeout(() => {
       this.writeValue("$CLEAR#");
       queryStateInterval = setInterval(this.queryState, 2000);
-      this.setData({state: this.data.READY});
+      this.setData({ state: this.data.READY });
     }, 1000)
   },
-  
+
   btnHome: function () {
     clearInterval(queryStateInterval);
     setTimeout(() => {
       this.writeValue("$ORDER,2#");
       queryStateInterval = setInterval(this.queryState, 2000);
+      this.setData({ state: this.data.HOME });
     }, 1000)
   },
 
-  queryState: function() {
+  btnStopHome: function() {
+    clearInterval(queryStateInterval);
+    setTimeout(() => {
+      this.writeValue("$CLEAR#");
+      queryStateInterval = setInterval(this.queryState, 2000);
+      this.setData({ state: this.data.READY });
+    }, 1000)
+  },
+
+  queryState: function () {
     let data = queryType % 5 == 0 ? "$QUERY,7#" : "$QUERY,0#";
     data = queryType % 20 == 0 ? "$QUERY,9#" : data;
     this.writeValue(data);
@@ -623,7 +680,7 @@ Page({
         this.mapCtx.moveToLocation()
         break;
       case 2:
-        this.setData({state : this.data.UNBIND});
+        this.setData({ state: this.data.UNBIND });
         this.btnBind();
         break;
       case 3:

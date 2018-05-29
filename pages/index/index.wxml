@@ -59,5 +59,9 @@
           bindtap="btnHome">返航
         </cover-view>
       </cover-view>
+
+      <cover-view hidden='{{state != HOME}}'
+        class = 'cover-view'
+        bindtap='btnStopHome'>取消返航</cover-view>
   </map>
 </view>
